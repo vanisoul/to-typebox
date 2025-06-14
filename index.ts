@@ -1,5 +1,6 @@
 import {
   type Static,
+  type TArray,
   type TBoolean,
   type TDate,
   type TNull,
@@ -10,8 +11,6 @@ import {
   type TString,
   type TSymbol,
   type TUnion,
-  type TArray,
-  Type,
 } from "@sinclair/typebox";
 
 type PrimitiveToSchema<T> = T extends string ? TString
@@ -20,7 +19,8 @@ type PrimitiveToSchema<T> = T extends string ? TString
   : T extends bigint ? TNumber
   : T extends symbol ? TSymbol
   : T extends Date ? TDate
-  : T extends Array<infer U> ? TArray<SchemaOf<U>>
+  : T extends Array<infer U>
+    ? undefined extends U ? TArray<OptionalSchema<U>> : TArray<SchemaOf<U>>
   : T extends null ? TNull
   : T extends object ? TObject<Convert<T>>
   : never;
@@ -36,16 +36,19 @@ type ToSchemaTuple<U> = U extends any ? PrimitiveToSchema<U>
   : never extends U ? never
   : never;
 
+type OptionalSchema<T> = T extends any ? TOptional<SchemaOf<NonNullable<T>>>
+  : never; // 如果是 undefined，則轉換為可選
+// type OptionalSchema<T> = T extends any ? TOptional<TUnion<[SchemaOf<NonNullable<T[K]>>, TNull]>> : never;  // 如果是 undefined，則轉換為可選或null
+
 type Convert<T> = T extends TSchema ? T : {
-  [K in keyof T]-?: undefined extends T[K]
-    ? TOptional<SchemaOf<NonNullable<T[K]>>>
+  [K in keyof T]-?: undefined extends T[K] ? OptionalSchema<T[K]>
     : SchemaOf<T[K]>;
 };
 type ToTypeBox<T> = TObject<Convert<T>>;
 
 interface UserDB {
   no: number | string;
-  list: (string|number)[];
+  list: (string | {bs:(string|undefined)[]})[];
   name?: string;
   r?: Record<string, number>;
   profile: {
