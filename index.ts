@@ -1,20 +1,26 @@
-import type {
-  Static,
-  TBoolean,
-  TDate,
-  TNull,
-  TNumber,
-  TObject,
-  TOptional,
-  TSchema,
-  TString,
-  TUnion,
+import {
+  type Static,
+  type TBoolean,
+  type TDate,
+  type TNull,
+  type TNumber,
+  type TObject,
+  type TOptional,
+  type TSchema,
+  type TString,
+  type TSymbol,
+  type TUnion,
+  type TArray,
+  Type,
 } from "@sinclair/typebox";
 
 type PrimitiveToSchema<T> = T extends string ? TString
   : T extends number ? TNumber
   : T extends boolean ? TBoolean
+  : T extends bigint ? TNumber
+  : T extends symbol ? TSymbol
   : T extends Date ? TDate
+  : T extends Array<infer U> ? TArray<SchemaOf<U>>
   : T extends null ? TNull
   : T extends object ? TObject<Convert<T>>
   : never;
@@ -39,41 +45,47 @@ type ToTypeBox<T> = TObject<Convert<T>>;
 
 interface UserDB {
   no: number | string;
+  list: (string|number)[];
   name?: string;
+  r?: Record<string, number>;
   profile: {
     // bio: string|number;
     followers?: number | null;
   };
 }
 
-const userDTOSchema = Type.Object({
-  no: Type.String(),
-  name: Type.String(),
-  follower: Type.Number(),
-});
+type UserDBSchema = ToTypeBox<UserDB>;
+type UserDBOriginal = Static<UserDBSchema>;
 
-type UserDTO = Static<typeof userDTOSchema>;
+// UserDBOriginal === UserDB
 
-function dbToDto<DB, DTO>(definition: (db: DB) => DTO, data: DB, schema: {
-  // dbSchema: Convert<DB>,
-  dtoSchema: ToTypeBox<DTO>;
-}): DTO {
-  return definition(data);
-}
+// const userDTOSchema = Type.Object({
+//   no: Type.String(),
+//   name: Type.String(),
+//   follower: Type.Number(),
+// });
 
-import { Type } from "@sinclair/typebox";
+// type UserDTO = Static<typeof userDTOSchema>;
 
-const result = dbToDto<UserDB, UserDTO>(
-  (db) => ({
-    no: db.no.toString(),
-    name: db.name ?? "",
-    follower: db.profile.followers ?? 0,
-  }),
-  { no: 123, name: "John", profile: { followers: null } },
-  {
-    dtoSchema: userDTOSchema,
-  },
-);
+// function dbToDto<DB, DTO>(definition: (db: DB) => DTO, data: DB, schema: {
+//   // dbSchema: Convert<DB>,
+//   dtoSchema: ToTypeBox<DTO>;
+// }): DTO {
+//   return definition(data);
+// }
 
+// import { Type } from "@sinclair/typebox";
 
-console.log(result);
+// const result = dbToDto<UserDB, UserDTO>(
+//   (db) => ({
+//     no: db.no.toString(),
+//     name: db.name ?? "",
+//     follower: db.profile.followers ?? 0,
+//   }),
+//   { no: 123, name: "John", profile: { followers: null },list:["s"] },
+//   {
+//     dtoSchema: userDTOSchema,
+//   },
+// );
+
+// console.log(result);
