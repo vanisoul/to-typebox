@@ -1,4 +1,4 @@
-# test-t-type
+# to-typebox
 
 To install dependencies:
 
