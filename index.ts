@@ -1,4 +1,5 @@
 import {
+  Type,
   type Static,
   type TArray,
   type TBoolean,
@@ -12,6 +13,7 @@ import {
   type TSymbol,
   type TUnion,
 } from "@sinclair/typebox";
+import { int } from "zod/v4";
 
 /**
  * 將基礎型別 (primitive types) 映射為對應的 TypeBox schema。
@@ -78,18 +80,34 @@ type ToTypeBox<T> = TObject<Convert<T>>;
 // 使用範例：將一個 UserDB 物件轉為 TypeBox schema
 
 interface UserDB {
-  no: number | string;
-  list: (string | {bs:(string|undefined)[]})[];
-  name?: string;
-  r?: Record<string, number>;
-  profile: {
-    // bio: string|number;
-    followers?: number | null;
-  };
+  ps: UserProfileDB[];
+}
+
+interface UserProfileDB {
+  user?: UserDB
 }
 
 type UserDBSchema = ToTypeBox<UserDB>;
-type UserDBOriginal = Static<UserDBSchema>;
+
+// 如果有循環參考 透過 ToTypeBox 建立出來的 Type 不支援 Type.Recursive
+
+
+// function dbToDTO<DB, DTO extends TSchema>(
+//   definition: (data: DB) => Static<DTO>,
+//   bSchema: DTO,
+// ) {
+
+// }
+
+// const userDB:UserDBSchema = Type.Recursive(self=> {
+//   return Type.Object({
+//     ps: Type.Array(Type.Object({
+//       user: Type.Optional(self)
+//     }))
+//   })
+// });
+
+// type UserDBOriginal = Static<UserDBSchema>;
 
 // UserDBOriginal === UserDB
 
